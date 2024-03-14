@@ -1,0 +1,308 @@
+Program.Sub.Preflight.Start
+v.Global.sRemoteHost.Declare(String,"")
+v.Global.sRemoteUser.Declare(String,"")
+v.Global.sRemotePassword.Declare(String,"")
+v.Global.sRemotePort.Declare(String,"")
+v.Global.sRemotePath.Declare(String,"")
+v.Global.sFolderDir.Declare(String,"")
+Program.External.Include.Library(6006.lib)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	
+	'Append and Update
+	F.Intrinsic.UI.InvokeWaitDialog("Updating Employee Records........................")
+'	V.Global.s6006Option.Set("52")
+	'hard coded in for testing only
+'	F.Intrinsic.Control.CallSub(Process_Files)
+	F.Intrinsic.Control.CallSub(Check_Cust_Dir)
+	F.Intrinsic.Control.CallSub(Load_Ftp)
+	F.Intrinsic.Control.CallSub(LogonFTP)
+	F.Intrinsic.Control.CallSub(Process_Files)
+	
+	F.Intrinsic.UI.CloseWaitDialog
+	
+	F.Intrinsic.Control.CallSub(Exit)
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Empl_Upload.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(Exit)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.Exit.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+
+	F.Intrinsic.Control.End
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Empl_Upload.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.Exit.End
+
+Program.Sub.Check_Cust_Dir.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	v.Local.sFolder.Declare(String,"")
+	v.Local.bExists.Declare(String,"")
+	
+	f.Intrinsic.String.Build("{0}\CUSTOM\", v.Caller.GlobalDir, v.Local.sFolder)
+	f.Intrinsic.File.DirExists(v.Local.sFolder, v.Local.bExists)
+	f.Intrinsic.Control.If(v.Local.bExists.Not)
+		f.Intrinsic.File.CreateDir(v.Local.sFolder)
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.String.Build("{0}\CUSTOM\5663\", v.Caller.GlobalDir, v.Local.sFolder)
+	f.Intrinsic.File.DirExists(v.Local.sFolder, v.Local.bExists)
+	f.Intrinsic.Control.If(v.Local.bExists.Not)
+		f.Intrinsic.File.CreateDir(v.Local.sFolder)
+	f.Intrinsic.Control.EndIf
+	
+	f.Intrinsic.String.Build("{0}\CUSTOM\5663\Empl_Upload\", v.Caller.GlobalDir, v.Local.sFolder)
+	V.Global.sFolderDir.Set(V.Local.sFolder)
+	f.Intrinsic.File.DirExists(v.Local.sFolder, v.Local.bExists)
+	f.Intrinsic.Control.If(v.Local.bExists.Not)
+		f.Intrinsic.File.CreateDir(v.Local.sFolder)
+	f.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Empl_Upload.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(Exit)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.Check_Cust_Dir.End
+
+Program.Sub.Load_Ftp.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	V.Local.sTemp.Declare(String,"")
+	
+	f.ODBC.Connection!con.OpenCompanyConnection
+		f.Data.DataTable.CreateFromSQL("sftpSettingsDT", "con", "Select * from GCG_5663_Settings")
+	f.ODBC.Connection!con.Close
+	
+	F.Intrinsic.Control.If(V.DataTable.sftpSettingsDT.RowCount--,<>,-1)
+	
+		v.Local.sTemp.Set(v.DataTable.sftpSettingsDT(v.DataTable.sftpSettingsDT.RowCount--).RemoteHost!FieldValTrim)
+'		f.Intrinsic.String.WeakDecryption(v.Local.sTemp, v.Global.sRemoteHost)
+		V.Global.sRemoteHost.Set(V.Local.sTemp.Trim)
+	
+		v.Local.sTemp.Set(v.DataTable.sftpSettingsDT(v.DataTable.sftpSettingsDT.RowCount--).RemoteUser!FieldValTrim)
+'		f.Intrinsic.String.WeakDecryption(v.Local.sTemp, v.Global.sRemoteUser)
+		V.Global.sRemoteUser.Set(V.Local.sTemp.Trim)
+		
+		v.Local.sTemp.Set(v.DataTable.sftpSettingsDT(v.DataTable.sftpSettingsDT.RowCount--).RemotePassword!FieldValTrim)
+'		f.Intrinsic.String.WeakDecryption(v.Local.sTemp, v.Global.sRemotePassword)
+		V.Global.sRemotePassword.Set(V.Local.sTemp.Trim)
+		
+		v.Local.sTemp.Set(v.DataTable.sftpSettingsDT(v.DataTable.sftpSettingsDT.RowCount--).RemotePort!FieldValTrim)
+'		f.Intrinsic.String.WeakDecryption(v.Local.sTemp, v.Global.sRemotePort)
+		V.Global.sRemotePort.Set(V.Local.sTemp.Trim)
+		
+		v.Local.sTemp.Set(v.DataTable.sftpSettingsDT(v.DataTable.sftpSettingsDT.RowCount--).RemotePath!FieldValTrim)
+'		f.Intrinsic.String.WeakDecryption(v.Local.sTemp, v.Global.sRemotePath)
+		V.Global.sRemotePath.Set(V.Local.sTemp.Trim)
+		
+		f.Data.DataTable.Close("sftpSettingsDT")
+	
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Empl_Upload.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(Exit)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.Load_Ftp.End
+
+Program.Sub.LogonFTP.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	
+	'you have to create this sub in your script.
+	F.Intrinsic.Control.AddEventHandler("SFTPDirList","Listdir")
+
+	'logon credentials.
+	f.Communication.SFTP.SetProperty("SSHAcceptServerAuthentication","true")
+	f.Communication.SFTP.SetProperty("remoteHost", v.Global.sRemoteHost.Trim)
+	f.Communication.SFTP.SetProperty("User", v.Global.sRemoteUser.Trim)
+	f.Communication.SFTP.SetProperty("Password", v.Global.sRemotePassword.Trim)
+	f.Communication.SFTP.SetProperty("remotePort", v.Global.sRemotePort)
+	f.Communication.SFTP.Logon
+	f.Communication.SFTP.SetProperty("RemotePath", v.Global.sRemotePath)
+
+	'this will fire the event handler sub ListDir for each file listed in the shares/nce folder. 
+	F.Communication.SFTP.ListDirectory
+	
+	f.Communication.SFTP.Logoff		
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Empl_Upload.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(Exit)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.LogonFTP.End
+
+Program.Sub.Listdir.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	v.Local.stemp.Declare(String,"")
+	
+	F.Intrinsic.Control.If(v.Args.filename.UCase,=,"EMPLOYEE_IMPORT.CSV")
+		'downloading files to new dir to read contents of those files.
+		f.Intrinsic.String.Build("{0}{1}",v.Global.sFolderDir,v.Args.filename,v.Local.stemp)
+		f.Communication.SFTP.SetProperty("RemoteFile",v.Args.filename)
+		f.Communication.SFTP.SetProperty("LocalFile",v.Local.stemp)
+		f.Communication.SFTP.SetProperty("TransferMode",2)
+		f.Communication.SFTP.SetProperty("Overwrite", true)
+		f.Communication.SFTP.Download
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Empl_Upload.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(Exit)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.Listdir.End
+
+Program.Sub.Process_Files.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	v.Local.sData.Declare(String,"")
+	v.Local.sRows.Declare(String,"")
+	v.Local.sFileList.Declare(String,"")
+	v.Local.sFiles.Declare(String,"")
+	v.Local.iCnt.Declare(Long,0)
+	V.Local.iRow.Declare(Long,0)
+	V.Local.sContrator.Declare(String,"")
+	V.Local.sSql.Declare(String,"")
+	
+	F.Intrinsic.String.Build("Select EMPLOYEE, NAME, DATE_HIRE, DATE_TERMINATION, BIRTHDATE, DEPT_EMPLOYEE, SHIFT, FREQUENCY, RATE, PAY_TYPE, CONTRACT_EMP From Employee_Mstr Where Employee = '{0}'",-1,V.Local.sSql)
+	
+	F.ODBC.Connection!Con.OpenCompanyConnection
+	F.Data.DataTable.CreateFromSQL("Emp","con",V.Local.sSql,True)
+	F.ODBC.Connection!Con.Close
+	
+	F.Intrinsic.UI.ChangeWaitStatus("Processing Employee File.................")
+	'hard coded in for testing only
+'	V.Global.sFolderDir.Set("\\GSSDB\Apps\Global\CUSTOM\5663\Employee\")
+	f.Intrinsic.File.GetFileList(V.Global.sFolderDir, v.Local.sFileList)
+	f.Intrinsic.String.Split(v.Local.sFileList, ":", v.Local.sFiles)
+	f.Intrinsic.Control.For(v.Local.iCnt, 0, v.Local.sFiles.UBound, 1)
+		
+		F.Intrinsic.String.Build("{0}{1}",V.Global.sFolderDir,V.Local.sFiles(V.Local.iCnt),V.Local.sFiles(V.Local.iCnt))
+		F.Intrinsic.File.File2String(V.Local.sFiles(V.Local.iCnt),V.Local.sRows)
+		F.Intrinsic.String.Split(V.Local.sRows,V.Ambient.NewLine,V.Local.sRows)
+		F.Intrinsic.Control.For(V.Local.iRow,1,V.Local.sRows.UBound,1)
+			F.Intrinsic.String.Split(V.Local.sRows(V.Local.iRow),",",V.Local.sData)
+			V.Local.sData.RedimPreserve(0,55)
+			F.Intrinsic.String.Build("{0} {1}",V.Local.sData(6).Trim,V.Local.sData(11).Trim,V.Local.sData(6))
+			F.Intrinsic.String.Format(V.Local.sData(7),"MMDDYY",V.Local.sData(7))
+			F.Intrinsic.String.Format(V.Local.sData(18),"MMDDYY",V.Local.sData(18))
+			F.Intrinsic.String.Format(V.Local.sData(53),"MMDDYY",V.Local.sData(53))
+			V.Local.sContrator.Set("N")
+			
+			F.Intrinsic.Control.SelectCase(V.Local.sData(52).UCase)
+				F.Intrinsic.Control.Case("CONTRACTOR")
+					V.Local.sData(52).Set("H")
+					V.Local.sContrator.Set("Y")
+					
+				F.Intrinsic.Control.Case("SALARIED EXEMPT")
+					V.Local.sData(52).Set("S")
+				
+				F.Intrinsic.Control.Case("SALARIED NON EXEMPT")
+					V.Local.sData(52).Set("S")
+					
+				F.Intrinsic.Control.CaseElse
+					V.Local.sData(52).Set("H")
+					
+			F.Intrinsic.Control.EndSelect
+			
+			F.Intrinsic.Control.If(v.Local.sData(54).Left1,=,2)
+				V.Local.sData(54).Set("2")
+			F.Intrinsic.Control.Else
+				V.Local.sData(54).Set("1")
+			F.Intrinsic.Control.EndIf
+			
+			F.Intrinsic.String.Build("Select Employee From Employee_Mstr Where Employee = '{0}'",V.Local.sData(15).Right5,V.Local.sSql)
+			F.ODBC.Connection!Con.OpenCompanyConnection
+			F.ODBC.Connection!Con.ExecuteAndReturn(V.Local.sSql,V.Local.sSql)
+			F.Intrinsic.Control.If(V.Local.sSql.Trim,=,"")
+				F.Intrinsic.Control.If(V.Local.sData(15).Trim,<>,"")
+					F.Intrinsic.String.LPad(V.Local.sData(15).Trim,"0",6,V.Local.sData(15))
+					F.Intrinsic.Control.If(V.Local.sData(52),=,"S")
+						F.Data.DataTable.AddRow("6006","EmpNum",V.Local.sData(15).Right5,"EmpName",V.Local.sData(6),"HireDate",V.Local.sData(7),"TermDate",V.Local.sData(18),"BirthDate",V.Local.sData(53),"Department",V.Local.sData(50).Left4,"Shift",V.Local.sData(54).Left1,"PayFreq",V.Local.sData(34).Left1,"PayType",V.Local.sData(52),"ContractEmp",V.Local.sContrator)
+					F.Intrinsic.Control.Else
+						F.Data.DataTable.AddRow("6006","EmpNum",V.Local.sData(15).Right5,"EmpName",V.Local.sData(6),"HireDate",V.Local.sData(7),"TermDate",V.Local.sData(18),"BirthDate",V.Local.sData(53),"Department",V.Local.sData(50).Left4,"Shift",V.Local.sData(54).Left1,"PayRate",V.Local.sData(55),"PayFreq",V.Local.sData(34).Left1,"PayType",V.Local.sData(52),"ContractEmp",V.Local.sContrator)
+					F.Intrinsic.Control.EndIf
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.Else
+				F.Intrinsic.Control.If(V.Local.sData(15).Trim,<>,"")
+					F.Intrinsic.String.LPad(V.Local.sData(15).Trim,"0",6,V.Local.sData(15))					
+					F.Intrinsic.Control.If(V.Local.sData(52),=,"S")
+						F.Data.DataTable.AddRow("Emp","EMPLOYEE",V.Local.sData(15).Right5,"NAME",V.Local.sData(6),"DATE_HIRE",V.Local.sData(7),"DATE_TERMINATION",V.Local.sData(18),"BIRTHDATE",V.Local.sData(53),"DEPT_EMPLOYEE",V.Local.sData(50).Left4,"SHIFT",V.Local.sData(54).Left1,"FREQUENCY",V.Local.sData(34).Left1,"PAY_TYPE",V.Local.sData(52),"CONTRACT_EMP",V.Local.sContrator)
+					F.Intrinsic.Control.Else
+						F.Data.DataTable.AddRow("Emp","EMPLOYEE",V.Local.sData(15).Right5,"NAME",V.Local.sData(6),"DATE_HIRE",V.Local.sData(7),"DATE_TERMINATION",V.Local.sData(18),"BIRTHDATE",V.Local.sData(53),"DEPT_EMPLOYEE",V.Local.sData(50).Left4,"SHIFT",V.Local.sData(54).Left1,"RATE",V.Local.sData(55),"FREQUENCY",V.Local.sData(34).Left1,"PAY_TYPE",V.Local.sData(52),"CONTRACT_EMP",V.Local.sContrator)
+					F.Intrinsic.Control.EndIf
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.EndIf
+			F.ODBC.Connection!Con.Close
+		F.Intrinsic.Control.Next(V.Local.iRow)
+
+		F.Intrinsic.Control.If(V.DataTable.6006.RowCount--,<>,-1)
+			F.Intrinsic.Control.CallSub(6006Sync)
+			F.Data.DataTable.DeleteRow("6006")
+			F.Data.DataTable.AcceptChanges("6006")
+		F.Intrinsic.Control.EndIf
+		
+		F.Intrinsic.Control.If(V.DataTable.Emp.RowCount--,<>,-1)
+			F.ODBC.Connection!Con.OpenCompanyConnection
+			F.Data.DataTable.SaveToDB("Emp","Con","Employee_Mstr","Employee",256,"Employee@!@Employee*!*Name@!@Name*!*Date_Hire@!@Date_Hire*!*Date_Termination@!@Date_Termination*!*Birthdate@!@Birthdate*!*Dept_Employee@!@Dept_Employee*!*Shift@!@Shift*!*Rate@!@Rate*!*Frequency@!@Frequency*!*Pay_Type@!@Pay_Type*!*Contract_Emp@!@Contract_Emp")
+			F.ODBC.Connection!Con.Close
+			F.Data.DataTable.DeleteRow("Emp")
+			F.Data.DataTable.AcceptChanges("Emp")
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.File.DeleteFile(V.Local.sFiles(V.Local.iCnt))
+	f.Intrinsic.Control.Next(v.Local.iCnt)	
+	
+	F.Data.DataTable.Close("Emp")
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Empl_Upload.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(Exit)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.Process_Files.End
