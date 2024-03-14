@@ -1,0 +1,365 @@
+Program.Sub.ScreenSU.Start
+Gui.FormBatch..Create
+Gui.FormBatch..Caption("Weekly/Monthly Batch Maintenace")
+Gui.FormBatch..Size(6675,2670)
+Gui.FormBatch..MinX(0)
+Gui.FormBatch..MinY(0)
+Gui.FormBatch..Position(0,0)
+Gui.FormBatch..BackColor(-2147483633)
+Gui.FormBatch..MousePointer(0)
+Gui.FormBatch..Event(UnLoad,FormBatch_UnLoad)
+Gui.FormBatch.lblPrefixWeekly.Create(Label,"Prefix Weekly Batch Number",True,2310,255,0,105,210,True,0,"Arial",8,-2147483633,0)
+Gui.FormBatch.lblPrefixMonthly.Create(Label,"Prefix Monthly Batch Number",True,2310,255,0,105,1035,True,0,"Arial",8,-2147483633,0)
+Gui.FormBatch.txtPreWeek.Create(TextBox,"",True,780,300,0,870,435,True,0,"Arial",8,-2147483643,1)
+Gui.FormBatch.txtPreWeek.MaxLength(1)
+Gui.FormBatch.txtPreWeek.Event(GotFocus,txtPreWeek_GotFocus)
+Gui.FormBatch.txtPreWeek.Event(LostFocus,txtPreWeek_LostFocus)
+Gui.FormBatch.txtPreMonth.Create(TextBox,"",True,780,300,0,870,1260,True,0,"Arial",8,-2147483643,1)
+Gui.FormBatch.txtPreMonth.MaxLength(1)
+Gui.FormBatch.txtPreMonth.Event(GotFocus,txtPreMonth_GotFocus)
+Gui.FormBatch.txtPreMonth.Event(LostFocus,txtPreMonth_LostFocus)
+Gui.FormBatch.lblLastWeek.Create(Label,"Last Weekly Sequence",True,1935,255,0,2670,210,True,0,"Arial",8,-2147483633,0)
+Gui.FormBatch.txtWeekSeq.Create(TextBox,"",True,1215,300,0,3030,435,True,0,"Arial",8,-2147483643,1)
+Gui.FormBatch.txtWeekSeq.MaxLength(4)
+Gui.FormBatch.txtWeekSeq.Event(GotFocus,txtWeekSeq_GotFocus)
+Gui.FormBatch.txtWeekSeq.Event(LostFocus,txtWeekSeq_LostFocus)
+Gui.FormBatch.lblLastMonth.Create(Label,"Last Monthly Sequence",True,1935,255,0,2670,1035,True,0,"Arial",8,-2147483633,0)
+Gui.FormBatch.txtMonthSeq.Create(TextBox,"",True,1215,300,0,3030,1260,True,0,"Arial",8,-2147483643,1)
+Gui.FormBatch.txtMonthSeq.MaxLength(4)
+Gui.FormBatch.txtMonthSeq.Event(GotFocus,txtMonthSeq_GotFocus)
+Gui.FormBatch.txtMonthSeq.Event(LostFocus,txtMonthSeq_LostFocus)
+Gui.FormBatch.cmdSave.Create(Button)
+Gui.FormBatch.cmdSave.Size(855,375)
+Gui.FormBatch.cmdSave.Position(105,1770)
+Gui.FormBatch.cmdSave.Caption("Save")
+Gui.FormBatch.cmdSave.Event(Click,cmdSave_Click)
+Gui.FormBatch.lbl1.Create(Label,"Note:  Weekly and Month Batch Prefix must be different.",True,4395,300,0,1080,1710,True,0,"Arial",8,-2147483633,0)
+Gui.FormBatch.lbl2.Create(Label,"Follow Prefix can not be used: A, B, C, D, E, F, I, L, J, P, R, S, T, W, X, Y",True,5265,255,0,1080,1995,True,0,"Arial",8,-2147483633,0)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	
+	'setting tabing order of controls
+	Gui.FormBatch.txtPreWeek.TabIndex(0)
+	Gui.FormBatch.txtWeekSeq.TabIndex(1)
+	Gui.FormBatch.txtPreMonth.TabIndex(2)
+	Gui.FormBatch.txtMonthSeq.TabIndex(3)
+	Gui.FormBatch.cmdSave.TabIndex(4)
+	
+	'making all entries ucase
+	Gui.FormBatch.txtMonthSeq.Mask(">")
+	Gui.FormBatch.txtPreMonth.Mask(">")
+	Gui.FormBatch.txtPreWeek.Mask(">")
+	Gui.FormBatch.txtWeekSeq.Mask(">")
+	
+	Gui.FormBatch.cmdSave.Enabled(False)
+	'getting batch seq and prefix for month and week
+	F.Intrinsic.Control.CallSub(Get_Batch)
+	
+	Gui.FormBatch..Show
+	
+	Gui.FormBatch.txtPreWeek.SetFocus
+	Gui.FormBatch.txtPreWeek.SelectAll
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(FormBatch_UnLoad)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.txtWeekSeq_LostFocus.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	V.Local.sSeq.Declare(String,"")
+	
+	Gui.FormBatch.cmdSave.Enabled(True)
+	
+	V.Local.sSeq.Set(V.Screen.FormBatch!txtWeekSeq.Text)
+	
+	F.Intrinsic.String.LPad(V.Local.sSeq.Trim,"0",4,V.Local.sSeq)
+	
+	F.Intrinsic.Control.BlockEvents
+	Gui.FormBatch.txtWeekSeq.Text(V.Local.sSeq)
+	F.Intrinsic.Control.UnBlockEvents
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(FormBatch_UnLoad)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.txtWeekSeq_LostFocus.End
+
+Program.Sub.txtWeekSeq_GotFocus.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+
+	Gui.FormBatch.txtWeekSeq.SelectAll
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(FormBatch_UnLoad)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.txtWeekSeq_GotFocus.End
+
+Program.Sub.txtMonthSeq_LostFocus.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	V.Local.sSeq.Declare(String,"")
+	
+	Gui.FormBatch.cmdSave.Enabled(True)
+	
+	V.Local.sSeq.Set(V.Screen.FormBatch!txtMonthSeq.Text)
+	
+	F.Intrinsic.String.LPad(V.Local.sSeq.Trim,"0",4,V.Local.sSeq)
+	
+	F.Intrinsic.Control.BlockEvents
+	Gui.FormBatch.txtMonthSeq.Text(V.Local.sSeq)
+	F.Intrinsic.Control.UnBlockEvents
+
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(FormBatch_UnLoad)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.txtMonthSeq_LostFocus.End
+
+Program.Sub.txtMonthSeq_GotFocus.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+
+	Gui.FormBatch.txtMonthSeq.SelectAll
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(FormBatch_UnLoad)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.txtMonthSeq_GotFocus.End
+
+Program.Sub.txtPreWeek_GotFocus.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+
+	Gui.FormBatch.txtPreWeek.SelectAll
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(FormBatch_UnLoad)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.txtPreWeek_GotFocus.End
+
+Program.Sub.txtPreMonth_GotFocus.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+
+	Gui.FormBatch.txtPreMonth.SelectAll
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(FormBatch_UnLoad)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.txtPreMonth_GotFocus.End
+
+Program.Sub.cmdSave_Click.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	V.Local.sWeek.Declare(String,"")
+	V.Local.sMonth.Declare(String,"")
+	
+	Gui.FormBatch.cmdSave.Enabled(False)
+	
+	F.Intrinsic.Control.If(V.Screen.FormBatch!txtWeekSeq.Text,<>,"")
+		F.Intrinsic.String.Build("{0}{1}",V.Screen.FormBatch!txtPreWeek.Text,V.Screen.FormBatch!txtWeekSeq.Text,V.Local.sWeek)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0}0000",V.Screen.FormBatch!txtPreWeek.Text,V.Local.sWeek)
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.Screen.FormBatch!txtMonthSeq.Text,<>,"")
+		F.Intrinsic.String.Build("{0}{1}",V.Screen.FormBatch!txtPreMonth.Text,V.Screen.FormBatch!txtMonthSeq.Text,V.Local.sMonth)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0}0000",V.Screen.FormBatch!txtPreMonth.Text,V.Local.sMonth)
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.DataTable.Batch.RowCount--,<>,-1)
+		F.Data.DataTable.SetValue("Batch",-1,"Last_W_Batch",V.Local.sWeek,"Last_M_Batch",V.Local.sMonth)
+	F.Intrinsic.Control.Else
+		F.Data.DataTable.AddRow("Batch","Last_W_Batch",V.Local.sWeek,"Last_M_Batch",V.Local.sMonth)
+	F.Intrinsic.Control.EndIf
+
+	F.ODBC.Connection!Con.OpenCompanyConnection
+	F.ODBC.Connection!Con.Execute("Delete From GCG_5663_Last_Batch")
+	F.Data.DataTable.SaveToDB("Batch","con","GCG_5663_Last_Batch","",128,"Last_M_Batch@!@Last_M_Batch*!*Last_W_Batch@!@Last_W_Batch")
+	F.ODBC.Connection!Con.Close
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.CallSub(FormBatch_UnLoad)
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.cmdSave_Click.End
+
+Program.Sub.FormBatch_UnLoad.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+
+	F.Intrinsic.Control.End
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry
+Program.Sub.FormBatch_UnLoad.End
+
+Program.Sub.txtPreWeek_LostFocus.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	V.Local.sBatch.Declare(String,"A,B,C,D,E,F,I,L,J,P,R,S,T,W,X,Y")
+	V.Local.sTemp.Declare(String,"")
+	
+	F.Intrinsic.Control.If(V.Screen.FormBatch!txtPreWeek.Text,<>,"")
+		F.Intrinsic.String.Build("{0},{1}",V.Local.sBatch,V.Screen.FormBatch!txtPreMonth.Text,V.Local.sBatch)
+		
+		F.Intrinsic.String.RegExMatch(V.Local.sBatch,V.Screen.FormBatch!txtPreWeek.Text,True,V.Local.sTemp)
+		
+		F.Intrinsic.Control.If(V.Local.sTemp.Trim,=,"")
+			Gui.FormBatch.cmdSave.Enabled(True)
+		F.Intrinsic.Control.Else
+			Gui.FormBatch.cmdSave.Enabled(False)
+			F.Intrinsic.Control.BlockEvents
+			Gui.FormBatch.txtPreWeek.Text("")
+			Gui.FormBatch.txtPreWeek.SetFocus
+			F.Intrinsic.Control.UnBlockEvents
+			F.Intrinsic.UI.Msgbox("Enter a different Weekly Batch Prefix","Attention")
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry	
+Program.Sub.txtPreWeek_LostFocus.End
+
+Program.Sub.txtPreMonth_LostFocus.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	V.Local.sBatch.Declare(String,"A,B,C,D,E,F,I,L,J,P,R,S,T,W,X,Y")
+	V.Local.sTemp.Declare(String,"")
+	
+	F.Intrinsic.Control.If(V.Screen.FormBatch!txtPreMonth.Text,<>,"")
+		F.Intrinsic.String.Build("{0},{1}",V.Local.sBatch,V.Screen.FormBatch!txtPreWeek.Text,V.Local.sBatch)
+		
+		F.Intrinsic.String.RegExMatch(V.Local.sBatch,V.Screen.FormBatch!txtPreMonth.Text,True,V.Local.sTemp)
+		
+		F.Intrinsic.Control.If(V.Local.sTemp.Trim,=,"")
+			Gui.FormBatch.cmdSave.Enabled(True)
+		F.Intrinsic.Control.Else
+			Gui.FormBatch.cmdSave.Enabled(False)
+			F.Intrinsic.Control.BlockEvents
+			Gui.FormBatch.txtPreMonth.Text("")
+			Gui.FormBatch.txtPreMonth.SetFocus
+			F.Intrinsic.Control.UnBlockEvents
+			F.Intrinsic.UI.Msgbox("Enter a different Monthly Batch Prefix","Attention")
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry	
+Program.Sub.txtPreMonth_LostFocus.End
+
+Program.Sub.Get_Batch.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare(String,"")
+	V.Local.sPreWeek.Declare(String,"")
+	V.Local.sPreMonth.Declare(String,"")
+	V.Local.sWeekSeq.Declare(String,"")
+	V.Local.sMonthSeq.Declare(String,"")
+	
+	F.ODBC.Connection!Con.OpenCompanyConnection
+	
+	F.Data.DataTable.CreateFromSQL("Batch","con","Select Last_W_Batch, Last_M_Batch From GCG_5663_Last_Batch",True)
+	
+	F.Intrinsic.Control.If(V.DataTable.Batch.RowCount--,<>,-1)
+		F.Intrinsic.String.RPad(V.DataTable.Batch(V.DataTable.Batch.RowCount--).Last_W_Batch!FieldValTrim," ",5,V.Local.sWeekSeq)
+		F.Intrinsic.String.RPad(V.DataTable.Batch(V.DataTable.Batch.RowCount--).Last_M_Batch!FieldValTrim," ",5,V.Local.sMonthSeq)
+		F.Intrinsic.String.Left(V.Local.sWeekSeq,1,V.Local.sPreWeek)
+		F.Intrinsic.String.Left(V.Local.sMonthSeq,1,V.Local.sPreMonth)
+		F.Intrinsic.String.Right(V.Local.sWeekSeq,4,V.Local.sWeekSeq)
+		F.Intrinsic.String.Right(V.Local.sMonthSeq,4,V.Local.sMonthSeq)
+		F.Intrinsic.Control.BlockEvents
+		Gui.FormBatch.txtPreWeek.Text(V.Local.sPreWeek)
+		Gui.FormBatch.txtPreMonth.Text(V.Local.sPreMonth)
+		Gui.FormBatch.txtWeekSeq.Text(V.Local.sWeekSeq)
+		Gui.FormBatch.txtMonthSeq.Text(V.Local.sMonthSeq)
+		F.Intrinsic.Control.UnBlockEvents
+	F.Intrinsic.Control.EndIf
+	
+	F.ODBC.Connection!Con.Close
+	
+	F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+		F.Intrinsic.String.Build("Project: {0}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}","GCG_5663_Batch_Maint.g2u",V.Ambient.NewLine,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End
+	F.Intrinsic.Control.EndIf
+Function.Intrinsic.Control.EndTry	
+Program.Sub.Get_Batch.End
