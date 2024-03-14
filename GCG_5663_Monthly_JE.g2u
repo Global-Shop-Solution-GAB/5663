@@ -1,0 +1,264 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Sub_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+F.Intrinsic.Control.CallSub(Get_File_Path)
+F.Intrinsic.Control.CallSub(Get_File)
+
+F.Intrinsic.Control.CallSub(Exit)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Sub_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Build("Project: GCG_5663_Monthly_JE.g2u{0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Exit)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Main.End
+
+Program.Sub.Get_File_Path.Start
+F.Intrinsic.Control.SetErrorHandler("Sub_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+V.Local.sFilePath.Declare(String,"")
+V.Local.bRet.Declare(Boolean,False)
+
+F.ODBC.Connection!con.OpenCompanyConnection
+F.Data.DataTable.CreateFromSQL("sftpSettingsDT", "con", "Select Monthly_Path from GCG_5663_Settings",True)
+F.ODBC.Connection!con.Close
+
+F.Intrinsic.Control.If(V.DataTable.sftpSettingsDT.RowCount--,=,-1)
+	F.Intrinsic.UI.Msgbox("Monthly Payroll File Directory not set up.  Go to Menu Item Payroll > File > FTP Ceridian Maintenance (5663)","Attention")
+	F.Intrinsic.Control.CallSub(Exit)
+F.Intrinsic.Control.Else
+	V.Local.sFilePath.Set(V.DataTable.sftpSettingsDT(V.DataTable.sftpSettingsDT.RowCount--).Monthly_Path!FieldValTrim)
+	F.Intrinsic.Control.If(V.Local.sFilePath.Right1,<>,"\")
+		F.Intrinsic.String.Build("{0}\",V.Local.sFilePath,V.Local.sFilePath)	
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.File.DirExists(V.Local.sFilePath,V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet,=,False)
+		F.Intrinsic.File.CreateDir(V.Local.sFilePath)
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.String.Build("{0}\Archive",V.Local.sFilePath,V.Local.sFilePath)
+	
+	F.Intrinsic.File.DirExists(V.Local.sFilePath,V.Local.bRet)
+	F.Intrinsic.Control.If(V.Local.bRet,=,False)
+		F.Intrinsic.File.CreateDir(V.Local.sFilePath)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Sub_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Build("Project: GCG_5663_Monthly_JE.g2u{0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Exit)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Get_File_Path.End
+
+Program.Sub.Exit.Start
+F.Intrinsic.Control.SetErrorHandler("Sub_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+
+F.Intrinsic.Control.End
+	
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Sub_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Build("Project: GCG_5663_Monthly_JE.g2u{0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+Program.Sub.Exit.End
+
+Program.Sub.Get_File.Start
+F.Intrinsic.Control.SetErrorHandler("Sub_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+V.Local.sFileList.Declare(String,"")
+V.Local.sFilePath.Declare(String,"")
+V.Local.sFile.Declare(String,"")
+V.Local.i.Declare(Long,0)
+V.Local.sTemp.Declare(String,"")
+
+V.Local.sFilePath.Set(V.DataTable.sftpSettingsDT(V.DataTable.sftpSettingsDT.RowCount--).Monthly_Path!FieldValTrim)
+F.Intrinsic.Control.If(V.Local.sFilePath.Right1,<>,"\")
+	F.Intrinsic.String.Build("{0}\",V.Local.sFilePath,V.Local.sFilePath)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.File.GetFileList(V.Local.sFilePath,V.Local.sFileList)
+
+F.Intrinsic.Control.If(V.Local.sFileList.Trim,<>,"")
+	F.Intrinsic.String.Split(v.Local.sFileList,":",v.Local.sFile)
+	F.Intrinsic.Control.For(V.Local.i,0,V.Local.sFile.UBound,1)
+		F.Intrinsic.String.Build("{0}{1}",V.Local.sFilePath,V.Local.sFile(V.Local.i),V.Local.sTemp)
+		F.Intrinsic.Control.CallSub(Process_File,"File",V.Local.sTemp)
+	F.Intrinsic.Control.Next(V.Local.i)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Sub_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Build("Project: GCG_5663_Monthly_JE.g2u{0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Exit)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Get_File.End
+
+Program.Sub.Process_File.Start
+F.Intrinsic.Control.SetErrorHandler("Sub_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String,"")
+V.Local.sFileData.Declare(String,"")
+V.Local.sFields.Declare(String,"")
+V.Local.sDataTypes.Declare(String,"")
+V.Local.bRet.Declare(Boolean,False)
+V.Local.i.Declare(Long,0)
+V.Local.sFilter.Declare(String,"")
+V.Local.sPostDate.Declare(String,"")
+V.Local.sBatch.Declare(String,"")
+V.Local.sBatchDetail.Declare(String,"")
+V.Local.sData.Declare(String,"")
+V.Local.sTemp.Declare(String,"")
+V.Local.sFile.Declare(String,"")
+V.Local.sArchivePath.Declare(String,"")
+V.Local.sFileName.Declare(String,"")
+
+F.Intrinsic.String.Split(V.Args.File,"\",V.Local.sFileName)
+
+F.Intrinsic.String.Build("{0}\Archive\{1}",V.DataTable.sftpSettingsDT(V.DataTable.sftpSettingsDT.RowCount--).Monthly_Path!FieldValTrim,V.Local.sFileName(V.Local.sFileName.UBound),V.Local.sArchivePath)
+
+F.Intrinsic.String.Format(V.Ambient.Date,"YYYYMMDD",V.Local.sPostDate)
+
+V.Local.sFields.Set("Pay_Date*!*Pay_Period*!*Legal_Entity_Name*!*Charged_Corp_Ledger_Code*!*Charged_District_Ledger_Code*!*Charged_Region_Ledger_Code*!*Charged_Site_Ledger_Code*!*Charged_OnSite_Ledger_Code*!*Charged_Job_Ledger_Code*!*Charged_Position_Ledger_Code*!*Charged_Department_Ledger_Code*!*Project_Ledger_Code*!*Docket_Ledger_Code*!*Pay_Type_Ledger_Code*!*Pay_Class_Ledger_Code*!*Category_Description*!*Category_Journal_Number*!*Debit_Amount*!*Credit_Amount*!*-*!*Acct_#")
+V.Local.sDataTypes.Set("String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String*!*String")
+
+F.ODBC.Connection!Con.OpenCompanyConnection
+F.ODBC.Connection!Con.ExecuteAndReturn("Select Last_M_Batch From GCG_5663_Last_Batch",V.Local.sBatch)
+
+F.Intrinsic.Control.If(V.Local.sBatch.Trim,=,"")
+	F.Intrinsic.UI.Msgbox("Go to Menu Item and enter In a Prefix for Monthly Batch Uploads")
+	F.ODBC.Connection!Con.Close
+	F.Intrinsic.Control.CallSub(Exit)
+F.Intrinsic.Control.Else
+	V.Local.sTemp.Set(V.Local.sBatch.Left1)
+	F.Intrinsic.Math.Add(V.Local.sBatch.Right4,1,V.Local.sBatch.Long)
+	F.Intrinsic.String.LPad(V.Local.sBatch,"0",4,V.Local.sBatch)
+	F.Intrinsic.String.Build("{0}{1}",V.Local.sTemp,V.Local.sBatch,V.Local.sBatch)
+	F.Intrinsic.String.Build("Update GCG_5663_Last_Batch Set Last_M_Batch = '{0}'",V.Local.sBatch,V.Local.sTemp)
+	F.ODBC.Connection!Con.Execute(V.Local.sTemp)
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!con.Close
+
+F.Automation.MSExcel.CheckPresence(V.Local.bRet)
+F.Intrinsic.Control.If(V.Local.bRet)
+	F.Automation.MSExcel.ReadSpreadsheet(V.Args.File,V.Local.sFileData)
+F.Intrinsic.Control.Else
+	F.Automation.OOCalc.ReadSpreadsheet(V.Args.File,False,V.Local.sFileData)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.If(V.Local.sFileData.Trim,<>,"")
+	F.Intrinsic.Control.Try
+		F.Data.DataTable.CreateFromString("Pay",V.Local.sFileData,V.Local.sFields,V.Local.sDataTypes,"*!*","$!$",True)
+	F.Intrinsic.Control.Catch
+		F.Intrinsic.Control.If(V.DataTable.Pay.Exists,=,False)
+			F.Intrinsic.UI.Msgbox("Monthly Ceridian Accural file not in correct format.  Contact GSS Admin","Attention")
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndTry
+	F.Data.DataTable.DeleteRow("Pay",0)
+	F.Data.DataView.Create("Pay","Temp",22,"Pay_Date = ''","")
+	F.Intrinsic.Control.For(V.Local.i,V.DataView.Pay!Temp.RowCount--,0,-1)
+		F.Data.DataTable.DeleteRow("Pay",V.DataView.Pay!Temp(V.Local.i).DataTableIndex)
+	F.Intrinsic.Control.Next(V.Local.i)
+	F.Data.DataView.Close("Pay","Temp")
+	F.Data.DataTable.AcceptChanges("Pay")
+	F.Data.DataView.Create("Pay","Temp",22,"","")
+	F.Data.DataView.ToDataTableDistinct("Pay","Temp","Acct","Acct_#",True)
+	F.Intrinsic.Control.For(V.Local.i,0,V.DataTable.Acct.RowCount--,1)
+		F.Intrinsic.String.Build("[Acct_#] = '{0}'",V.DataTable.Acct(V.Local.i).Acct_#!FieldValTrim,V.Local.sFilter)
+		F.Data.DataView.SetFilter("Pay","Temp",V.Local.sFilter)
+		F.Data.DataView.ToDataTable("Pay","Temp","TempAcct",True)
+		F.Data.DataView.Create("TempAcct","Temp",22,"[Credit_Amount] = ''","")
+		F.Data.DataView.SetValue("TempAcct","Temp",-1,"Credit_Amount","0.00")
+		F.Data.DataView.Close("TempAcct","Temp")
+		F.Data.DataView.Create("TempAcct","Temp",22,"[Debit_Amount] = ''","")	
+		F.Data.DataView.SetValue("TempAcct","Temp",-1,"Debit_Amount","0.00")
+		F.Data.DataView.Close("TempAcct","Temp")
+		F.Data.DataTable.AddExpressionColumn("TempAcct","Credit","Float","Convert(Credit_Amount,System.Double)")
+		F.Data.DataTable.AddExpressionColumn("TempAcct","TotalCredit","Float","Sum(Credit)")
+		F.Data.DataTable.AddExpressionColumn("TempAcct","Debit","Float","Convert(Debit_Amount,System.Double)")
+		F.Data.DataTable.AddExpressionColumn("TempAcct","TotalDebit","Float","Sum(Debit)")
+		V.Local.sData.Redim(0,10)
+		V.Local.sData(0).Set(V.DataTable.TempAcct(V.DataTable.TempAcct.RowCount--).Acct_#!FieldValTrim)
+		F.Intrinsic.String.Replace(V.Local.sData(0),V.Ambient.Tab," ",V.Local.sData(0))
+		F.Intrinsic.String.RPad(V.Local.sData(0).Trim," ",15,V.Local.sData(0))
+		V.Local.sData(1).Set(V.Local.sPostDate)
+		V.Local.sData(2).Set(v.Local.sBatch)
+		F.Intrinsic.String.RPad(v.Local.sData(3).Trim," ",5,V.Local.sData(3))
+		F.Intrinsic.String.RPad(V.Local.sData(4).Trim," ",7,V.Local.sData(4))
+		F.Intrinsic.String.RPad(V.Local.sData(5).Trim," ",15,V.Local.sData(5))
+		F.Intrinsic.String.RPad(V.DataTable.TempAcct(V.DataTable.TempAcct.RowCount--).Category_Description!FieldValTrim," ",30,V.Local.sData(7))
+		V.Local.sData(8).Set("GL")
+		V.Local.sData(9).Set("07")
+		F.Intrinsic.String.RPad(V.Local.sData(10).Trim," ",111,V.Local.sData(10))
+		'checking credit amount
+		F.Intrinsic.Control.If(V.DataTable.TempAcct(V.DataTable.TempAcct.RowCount--).TotalCredit!FieldValFloat,>,0)
+			F.Intrinsic.Math.Mult(V.DataTable.TempAcct(V.DataTable.TempAcct.RowCount--).TotalCredit!FieldValFloat,-1,V.Local.sData(6))
+			F.Intrinsic.String.Format(V.Local.sData(6),"#0.00#",V.Local.sData(6))
+			F.Intrinsic.String.RPad(V.Local.sData(6)," ",16,V.Local.sData(6))
+			F.Intrinsic.Control.If(V.Local.sBatchDetail.Trim,=,"")
+				F.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}",V.Local.sData(0),V.Local.sData(1),V.Local.sData(2),V.Local.sData(3),V.Local.sData(4),V.Local.sData(5),V.Local.sData(6),V.Local.sData(7),V.Local.sData(8),V.Local.sData(9),V.Local.sData(10),V.Local.sBatchDetail)
+			F.Intrinsic.Control.Else
+				F.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}",V.Local.sBatchDetail,V.Ambient.NewLine,V.Local.sData(0),V.Local.sData(1),V.Local.sData(2),V.Local.sData(3),V.Local.sData(4),V.Local.sData(5),V.Local.sData(6),V.Local.sData(7),V.Local.sData(8),V.Local.sData(9),V.Local.sData(10),V.Local.sBatchDetail)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+		'checking debit amount
+		F.Intrinsic.Control.If(V.DataTable.TempAcct(V.DataTable.TempAcct.RowCount--).TotalDebit!FieldValFloat,>,0)
+			F.Intrinsic.String.Format(V.DataTable.TempAcct(V.DataTable.TempAcct.RowCount--).TotalDebit!FieldValFloat,"#0.00#",V.Local.sData(6))
+			F.Intrinsic.String.RPad(V.Local.sData(6)," ",16,V.Local.sData(6))
+			F.Intrinsic.Control.If(V.Local.sBatchDetail.Trim,=,"")
+				F.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}",V.Local.sData(0),V.Local.sData(1),V.Local.sData(2),V.Local.sData(3),V.Local.sData(4),V.Local.sData(5),V.Local.sData(6),V.Local.sData(7),V.Local.sData(8),V.Local.sData(9),V.Local.sData(10),V.Local.sBatchDetail)
+			F.Intrinsic.Control.Else
+				F.Intrinsic.String.Build("{0}{1}{2}{3}{4}{5}{6}{7}{8}{9}{10}{11}{12}",V.Local.sBatchDetail,V.Ambient.NewLine,V.Local.sData(0),V.Local.sData(1),V.Local.sData(2),V.Local.sData(3),V.Local.sData(4),V.Local.sData(5),V.Local.sData(6),V.Local.sData(7),V.Local.sData(8),V.Local.sData(9),V.Local.sData(10),V.Local.sBatchDetail)
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+		
+		F.Data.DataTable.Close("TempAcct")
+	F.Intrinsic.Control.Next(V.Local.i)
+	F.Data.DataTable.Close("Pay")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.String.Build("{0}\GLDETAIL.txt",V.Caller.FilesDir,V.Local.sFile)
+F.Intrinsic.File.String2File(V.Local.sFile,V.Local.sBatchDetail)
+'1Shot Callwrapper for GL Detail
+
+F.Global.General.CallWrapperSync(50,"UPLGDETL")
+
+F.Intrinsic.File.MoveFile(V.Args.File,V.Local.sArchivePath,V.Local.i)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Sub_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Build("Project: GCG_5663_Monthly_JE.g2u{0}{0}Subroutine: {1}{0}Error Occurred {2} with description {3}",V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Exit)
+Function.Intrinsic.Control.EndIf
+Program.Sub.Process_File.End
